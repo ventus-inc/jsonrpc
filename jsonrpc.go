@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/urlfetch"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -283,7 +285,7 @@ type RPCRequests []*RPCRequest
 //
 // endpoint: JSON-RPC service URL to which JSON-RPC requests are sent.
 func NewClient(endpoint string) RPCClient {
-	return NewClientWithOpts(endpoint, nil)
+	return NewClientWithOpts(endpoint, nil, nil)
 }
 
 // NewClientWithOpts returns a new RPCClient instance with custom configuration.
@@ -291,7 +293,7 @@ func NewClient(endpoint string) RPCClient {
 // endpoint: JSON-RPC service URL to which JSON-RPC requests are sent.
 //
 // opts: RPCClientOpts provide custom configuration
-func NewClientWithOpts(endpoint string, opts *RPCClientOpts) RPCClient {
+func NewClientWithOpts(endpoint string, opts *RPCClientOpts, c context.Context) RPCClient {
 	rpcClient := &rpcClient{
 		endpoint:      endpoint,
 		httpClient:    &http.Client{},
@@ -310,6 +312,10 @@ func NewClientWithOpts(endpoint string, opts *RPCClientOpts) RPCClient {
 		for k, v := range opts.CustomHeaders {
 			rpcClient.customHeaders[k] = v
 		}
+	}
+
+	if c != nil {
+		rpcClient.httpClient = urlfetch.Client(c)
 	}
 
 	return rpcClient
